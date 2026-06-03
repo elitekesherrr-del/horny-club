@@ -30,7 +30,6 @@ CHANNEL_2_LINK = "https://t.me/K4NHA_EMPIRE"
 
 STORAGE_CHANNEL_ID = -1003945923396
 
-
 # ==========================================
 # VIDEOS
 # ==========================================
@@ -50,7 +49,6 @@ VIDEOS = {
     "class36": 55, "class37": 56, "class38": 57, "class39": 58,
     "class40": 59
 }
-
 
 # ==========================================
 # CHANNEL CHECK
@@ -75,7 +73,6 @@ async def check_join(bot, user_id):
 
 def is_verified(not_joined):
     return len(not_joined) == 0
-
 
 # ==========================================
 # KEYBOARDS
@@ -106,7 +103,6 @@ def reply_menu():
 
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-
 # ==========================================
 # START
 # ==========================================
@@ -127,12 +123,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_menu()
     )
 
-
 # ==========================================
 # VERIFY CALLBACK
 # ==========================================
 
 async def verify_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     query = update.callback_query
     await query.answer()
 
@@ -166,9 +162,8 @@ async def verify_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(buttons)
         )
 
-
 # ==========================================
-# TEXT HANDLER (MAIN SECURITY LOGIC)
+# TEXT HANDLER (MAIN SECURITY)
 # ==========================================
 
 async def text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -176,35 +171,25 @@ async def text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = update.message.text
 
-    # 🔥 ALWAYS CHECK LIVE STATUS (LEAVE DETECTION FIX)
+    # 🔥 LIVE CHECK (ANTI LEAVE SYSTEM)
     not_joined = await check_join(context.bot, user_id)
 
     if not is_verified(not_joined):
         await update.message.reply_text(
-            "⚠️ You left the channel!\nJoin again to continue 👇",
+            "⚠️ You left a channel!\nJoin again to continue 👇",
             reply_markup=join_keyboard()
         )
         return
 
-    # ======================================
     # VERIFY BUTTON
-    # ======================================
-
     if text == "🔄 VERIFY ACCESS":
-
         if is_verified(not_joined):
             await update.message.reply_text("✅ Already Verified 💖")
         else:
-            await update.message.reply_text(
-                "⚠️ Not verified yet!",
-                reply_markup=join_keyboard()
-            )
+            await update.message.reply_text("⚠️ Not verified yet!", reply_markup=join_keyboard())
         return
 
-    # ======================================
     # BUTTON MAP
-    # ======================================
-
     button_map = {}
 
     for i in range(1, 32):
@@ -213,10 +198,7 @@ async def text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i in range(32, 41):
         button_map[f"💘 𝘽𝘼𝘿𝘿𝙄𝙀 {i-31} 💝"] = f"class{i}"
 
-    # ======================================
     # SEND VIDEO
-    # ======================================
-
     if text in button_map:
 
         key = button_map[text]
@@ -232,7 +214,6 @@ async def text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             await update.message.reply_text(f"❌ Error: {e}")
 
-
 # ==========================================
 # MENU SETUP
 # ==========================================
@@ -242,9 +223,8 @@ async def set_menu(app):
         BotCommand("start", "Start Bot 💖")
     ])
 
-
 # ==========================================
-# MAIN
+# MAIN (RENDER FIXED)
 # ==========================================
 
 def main():
@@ -259,7 +239,15 @@ def main():
 
     app.post_init = set_menu
 
-    app.run_polling()
+    async def run():
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling()
+
+        print("✅ Bot is live")
+        await asyncio.Event().wait()
+
+    asyncio.run(run())
 
 
 if __name__ == "__main__":
