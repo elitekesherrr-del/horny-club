@@ -15,26 +15,26 @@ CHANNEL_1_LINK = "https://t.me/K3NHA_EMPIRE"
 CHANNEL_2_LINK = "https://t.me/K4NHA_EMPIRE"
 STORAGE_CHANNEL_ID = -1003945923396
 
-# --- FLASK SERVER ---
+VIDEOS = {f"class{i}": i+1 for i in range(1, 41)} # Maine range adjust ki hai
+
+# --- FLASK SERVER (Render ke liye) ---
 app_web = Flask(__name__)
 @app_web.route('/')
-def home():
-    return "Bot is running!"
+def home(): return "Bot is active!"
 
 def run_web():
     port = int(os.environ.get("PORT", 10000))
     app_web.run(host='0.0.0.0', port=port)
 
-# --- YOUR FUNCTIONS ---
+# --- BOT FUNCTIONS ---
 async def check_join(bot, user_id):
     not_joined = []
-    for name, link in [("CHANNEL 1", CHANNEL_1), ("CHANNEL 2", CHANNEL_2)]:
+    for chan in [CHANNEL_1, CHANNEL_2]:
         try:
-            member = await bot.get_chat_member(link, user_id)
-            if member.status not in ["member", "administrator", "creator"]:
-                not_joined.append((name, CHANNEL_1_LINK if "1" in name else CHANNEL_2_LINK))
-        except:
-            not_joined.append((name, CHANNEL_1_LINK if "1" in name else CHANNEL_2_LINK))
+            m = await bot.get_chat_member(chan, user_id)
+            if m.status not in ["member", "administrator", "creator"]:
+                not_joined.append(chan)
+        except: not_joined.append(chan)
     return not_joined
 
 def reply_menu():
@@ -52,28 +52,32 @@ def reply_menu():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("💖 PREMIUM EDITS BOT 💖\n\nSelect your content below 👇", reply_markup=reply_menu())
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if query.data == "verify":
-        await query.message.reply_text("✅ Verification logic triggered!")
-
 async def text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    # Simple logic to match your buttons
-    if "𝙃𝙊𝙍𝙉𝙔 𝙀𝘿𝙄𝙏𝙎" in text or "𝘽𝘼𝘿𝘿𝙄𝙀" in text:
-        await update.message.reply_text("Button clicked: " + text)
+    user_id = update.effective_user.id
+    
+    # Verification check
+    if await check_join(context.bot, user_id):
+        await update.message.reply_text("⚠️ Please join the channels first!")
+        return
 
-async def set_menu(app):
-    await app.bot.set_my_commands([BotCommand("start", "Restart The Bot 💖")])
+    # Button Map
+    button_map = {f"💝 𝙃𝙊𝙍𝙉𝙔 𝙀𝘿𝙄𝙏𝙎 {i} 💖": f"class{i}" for i in range(1, 32)}
+    button_map.update({f"💘 𝘽𝘼𝘿𝘿𝙄𝙀 {i-31}💝": f"class{i}" for i in range(32, 41)})
 
-# --- MAIN LOOP ---
+    if text in button_map:
+        try:
+            await context.bot.copy_message(chat_id=update.message.chat_id, 
+                                           from_chat_id=STORAGE_CHANNEL_ID, 
+                                           message_id=VIDEOS[button_map[text]], 
+                                           protect_content=True)
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {e}\n(Bot ko Channel mein Admin banaya hai?)")
+
 async def run_bot():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_buttons))
-    app.post_init = set_menu
     await app.initialize()
     await app.start()
     await app.updater.start_polling()
