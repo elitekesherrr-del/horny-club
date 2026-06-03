@@ -15,7 +15,7 @@ CHANNEL_1 = "@K3NHA_EMPIRE"
 CHANNEL_2 = "@K4NHA_EMPIRE"
 CHANNEL_1_LINK = "https://t.me/K3NHA_EMPIRE"
 CHANNEL_2_LINK = "https://t.me/K4NHA_EMPIRE"
-STORAGE_CHANNEL_ID = -1003945923396    # Verify this is correct
+STORAGE_CHANNEL_ID = -1003945923396    
 
 # ==================== VIDEO MAPPING ====================
 VIDEOS = {
@@ -94,19 +94,17 @@ def get_join_keyboard(not_joined):
 
 def reply_menu():
     keyboard = [["✅ 𝙑𝙀𝙍𝙄𝙁𝙔 𝘼𝘾𝘾𝙀𝙎𝙎"]]
-    # Horny edits 1-31
     for i in range(1, 32, 2):
         row = [f"💝 𝙃𝙊𝙍𝙉𝙔 𝙀𝘿𝙄𝙏𝙎 {i} 💖"]
         if i + 1 <= 31:
             row.append(f"💝 𝙃𝙊𝙍𝙉𝙔 𝙀𝘿𝙄𝙏𝙎 {i+1} 💖")
         keyboard.append(row)
-    # Baddie 32-40
     for i in range(32, 41, 2):
         row = [f"💘 𝘽𝘼𝘿𝘿𝙄𝙀 {i-31}💝"]
         if i + 1 <= 40:
             row.append(f"💘 𝘽𝘼𝘿𝘿𝙄𝙀 {i-30}💝")
         keyboard.append(row)
-    # Admin panel button
+    # Admin Panel Button
     keyboard.append(["👑 𝘼𝘿𝙈𝙄𝙉 𝙋𝘼𝙉𝙀𝙇 👑"])
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -117,13 +115,9 @@ async def auto_delete_message(context, chat_id, message_id, delay=1800):
     except:
         pass
 
-# ==================== ADMIN PANEL ====================
+# ==================== ADMIN PANEL FUNCTIONS ====================
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Called when user clicks the Admin Panel button or types /admin"""
-    await update.message.reply_text(
-        "👑 *Admin Panel*\n\nPlease enter the secret code to continue.",
-        parse_mode="Markdown"
-    )
+    await update.message.reply_text("👑 *Admin Panel*\n\nPlease enter the secret code to continue.", parse_mode="Markdown")
     context.user_data["awaiting_admin_code"] = True
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -138,8 +132,8 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for uid, info in users_db.items():
             uname = info.get("username", "None")
             fname = info.get("first_name", "None")
-            user_list.append(f"👤 {fname}\n🆔 `{uid}`\n📛 @{uname}\n")
-        msg = "📊 *User List:*\n\n" + "\n".join(user_list)
+            user_list.append(f"👤 {fname} | 🆔 `{uid}` | 📛 @{uname}")
+        msg = "📊 *Total Users:* " + str(len(users_db)) + "\n\n" + "\n".join(user_list)
         if len(msg) > 4000:
             parts = [msg[i:i+4000] for i in range(0, len(msg), 4000)]
             for part in parts:
@@ -149,25 +143,17 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(msg, parse_mode="Markdown")
 
     elif query.data == "admin_broadcast":
-        await query.edit_message_text(
-            "📢 *Broadcast Mode*\n\nSend me any message (text, photo, video, etc.).\nType /cancel to abort.",
-            parse_mode="Markdown"
-        )
+        await query.edit_message_text("📢 *Broadcast Mode*\n\nSend me any message (text, photo, video, etc.). It will be sent to ALL users.\n\nType /cancel to abort.", parse_mode="Markdown")
         context.user_data["broadcast_mode"] = True
 
     elif query.data == "admin_test_storage":
-        await query.edit_message_text("🔍 Testing storage channel... Please wait.")
+        await query.edit_message_text("🔍 Testing storage channel...")
         try:
-            test_msg = await context.bot.forward_message(
-                chat_id=query.from_user.id,
-                from_chat_id=STORAGE_CHANNEL_ID,
-                message_id=2,
-                protect_content=True
-            )
+            test_msg = await context.bot.forward_message(chat_id=query.from_user.id, from_chat_id=STORAGE_CHANNEL_ID, message_id=2, protect_content=True)
             await context.bot.delete_message(chat_id=query.from_user.id, message_id=test_msg.message_id)
-            await query.edit_message_text("✅ Storage channel is accessible. Videos should work.")
+            await query.edit_message_text("✅ Storage channel is accessible. Videos should work perfectly.")
         except Exception as e:
-            await query.edit_message_text(f"❌ Error: {str(e)}\n\nPossible fixes:\n- Add bot as admin in storage channel\n- Check STORAGE_CHANNEL_ID\n- Ensure message ID 2 exists")
+            await query.edit_message_text(f"❌ Error: {str(e)}")
 
     elif query.data == "admin_close":
         await query.edit_message_text("Admin panel closed.")
@@ -177,10 +163,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     add_user(user.id, user.username, user.first_name)
-    await update.message.reply_text(
-        "💖 𝙋𝙍𝙀𝙈𝙄𝙐𝙈 𝙀𝘿𝙄𝙏𝙎 𝘽𝙊𝙏 💖\n\nSelect your content below 👇",
-        reply_markup=reply_menu()
-    )
+    await update.message.reply_text("💖 𝙋𝙍𝙀𝙈𝙄𝙐𝙈 𝙀𝘿𝙄𝙏𝙎 𝘽𝙊𝙏 💖\n\nSelect your content below 👇", reply_markup=reply_menu())
     not_joined = await check_join(context.bot, user.id)
     if not_joined:
         await update.message.reply_text(random.choice(JOIN_MESSAGES), reply_markup=get_join_keyboard(not_joined))
@@ -198,9 +181,7 @@ async def verify_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ==================== MASTER MESSAGE ROUTER ====================
 async def master_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handles broadcast, admin code, and video buttons securely."""
-    
-    # 1. BROADCAST MODE CHECK
+    # 1. BROADCAST HANDLER
     if context.user_data.get("broadcast_mode"):
         if update.message.text == "/cancel":
             context.user_data.pop("broadcast_mode")
@@ -215,16 +196,12 @@ async def master_message_handler(update: Update, context: ContextTypes.DEFAULT_T
         total = len(users_db)
         success = 0
         fail = 0
-        await update.message.reply_text(f"📡 Broadcasting to {total} users...")
+        await update.message.reply_text(f"📡 Broadcasting to {total} users... Please wait.")
 
         for uid_str in users_db.keys():
             try:
                 uid = int(uid_str)
-                await context.bot.copy_message(
-                    chat_id=uid, 
-                    from_chat_id=update.message.chat_id, 
-                    message_id=update.message.message_id
-                )
+                await context.bot.copy_message(chat_id=uid, from_chat_id=update.message.chat_id, message_id=update.message.message_id)
                 success += 1
             except:
                 fail += 1
@@ -234,7 +211,6 @@ async def master_message_handler(update: Update, context: ContextTypes.DEFAULT_T
         context.user_data.pop("broadcast_mode")
         return
 
-    # Ignore if not a text message (unless in broadcast mode)
     if not update.message.text:
         return
 
@@ -242,7 +218,7 @@ async def master_message_handler(update: Update, context: ContextTypes.DEFAULT_T
     user_id = update.effective_user.id
     add_user(user_id, update.effective_user.username, update.effective_user.first_name)
 
-    # 2. ADMIN CODE CHECK
+    # 2. ADMIN CODE HANDLER
     if context.user_data.get("awaiting_admin_code"):
         if text == SECRET_CODE:
             context.user_data["awaiting_admin_code"] = False
@@ -252,10 +228,7 @@ async def master_message_handler(update: Update, context: ContextTypes.DEFAULT_T
                 [InlineKeyboardButton("🔧 Test Storage Channel", callback_data="admin_test_storage")],
                 [InlineKeyboardButton("❌ Close Panel", callback_data="admin_close")]
             ]
-            await update.message.reply_text(
-                "✅ Access Granted!\n\nChoose an option:",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            await update.message.reply_text("✅ Access Granted!\n\nChoose an option:", reply_markup=InlineKeyboardMarkup(keyboard))
         else:
             await update.message.reply_text("❌ Wrong code. Access denied.")
             context.user_data["awaiting_admin_code"] = False
@@ -293,16 +266,18 @@ async def master_message_handler(update: Update, context: ContextTypes.DEFAULT_T
             await update.message.reply_text("❌ Video not found in mapping.")
             return
         try:
+            # COPY MESSAGE (Sends the video)
             sent_msg = await context.bot.copy_message(
                 chat_id=update.message.chat_id,
                 from_chat_id=STORAGE_CHANNEL_ID,
                 message_id=msg_id,
                 protect_content=True
             )
-            # Auto‑delete after 30 minutes
-            asyncio.create_task(auto_delete_message(context, sent_msg.chat_id, sent_msg.message_id, delay=1800))
+            # ERROR FIXED HERE: using update.message.chat_id and sent_msg.message_id properly
+            asyncio.create_task(auto_delete_message(context, update.message.chat_id, sent_msg.message_id, delay=1800))
         except Exception as e:
-            await update.message.reply_text(f"❌ Failed to send video. Make sure Bot is Admin in Storage Channel!")
+            # Ab ye error tabhi aayega jab sach mein video fail hogi (e.g., bot storage channel mein nahi hai)
+            await update.message.reply_text(f"❌ Failed to send video. Make sure Bot is Admin in Storage Channel! Error: {e}")
 
 async def set_commands(app):
     await app.bot.set_my_commands([
@@ -318,8 +293,6 @@ async def run_bot():
     app.add_handler(CommandHandler("admin", admin_panel))
     app.add_handler(CallbackQueryHandler(verify_callback, pattern="verify"))
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^admin_"))
-    
-    # Master handler handles everything text-related correctly now
     app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, master_message_handler))
     
     app.post_init = set_commands
@@ -337,4 +310,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
