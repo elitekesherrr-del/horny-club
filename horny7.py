@@ -3,35 +3,42 @@ import threading
 import asyncio
 from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, BotCommand
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import (
+    Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+)
 
+# --- CONFIG ---
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHANNEL_1 = "@K3NHA_EMPIRE"
 CHANNEL_2 = "@K4NHA_EMPIRE"
 CHANNEL_1_LINK = "https://t.me/K3NHA_EMPIRE"
 CHANNEL_2_LINK = "https://t.me/K4NHA_EMPIRE"
 STORAGE_CHANNEL_ID = -1003945923396
-
-# Videos dictionary yahan wahi rahegi jo tumhari purani thi
-VIDEOS = {f"class{i}": i+1 for i in range(1, 41)} 
+VIDEOS = {f"class{i}": i+1 for i in range(1, 41)}
 
 app_web = Flask(__name__)
 @app_web.route('/')
-def home(): return "Bot is active!"
+def home(): return "Bot is running!"
 
 def run_web():
     port = int(os.environ.get("PORT", 10000))
     app_web.run(host='0.0.0.0', port=port)
 
+# --- CORE LOGIC ---
 async def check_join(bot, user_id):
     not_joined = []
-    for chan, link in [(CHANNEL_1, CHANNEL_1_LINK), (CHANNEL_2, CHANNEL_2_LINK)]:
-        try:
-            m = await bot.get_chat_member(chan, user_id)
-            if m.status not in ["member", "administrator", "creator"]:
-                not_joined.append((chan, link))
-        except:
-            not_joined.append((chan, link))
+    # Check Channel 1
+    try:
+        m1 = await bot.get_chat_member(CHANNEL_1, user_id)
+        if m1.status not in ["member", "administrator", "creator"]:
+            not_joined.append(("CHANNEL 1", CHANNEL_1_LINK))
+    except: not_joined.append(("CHANNEL 1", CHANNEL_1_LINK))
+    # Check Channel 2
+    try:
+        m2 = await bot.get_chat_member(CHANNEL_2, user_id)
+        if m2.status not in ["member", "administrator", "creator"]:
+            not_joined.append(("CHANNEL 2", CHANNEL_2_LINK))
+    except: not_joined.append(("CHANNEL 2", CHANNEL_2_LINK))
     return not_joined
 
 def reply_menu():
@@ -49,24 +56,26 @@ def reply_menu():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("💖 PREMIUM EDITS BOT 💖", reply_markup=reply_menu())
     keyboard = [[InlineKeyboardButton("📢 JOIN 1", url=CHANNEL_1_LINK)], [InlineKeyboardButton("📢 JOIN 2", url=CHANNEL_2_LINK)], [InlineKeyboardButton("✅ VERIFY", callback_data="verify")]]
-    await update.message.reply_text("⚠️ Join both channels to unlock bot:", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("⚠️ Join both channels to start:", reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def verify_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     not_joined = await check_join(context.bot, query.from_user.id)
     if not not_joined:
-        await query.message.edit_text("✅ Verification Successful! Now use buttons.")
+        await query.message.edit_text("✅ Verification Successful! Now use the buttons.")
     else:
-        text = "❌ Not joined:\n" + "\n".join([f"{c}: {l}" for c, l in not_joined])
-        await query.message.edit_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 VERIFY AGAIN", callback_data="verify")]]))
+        keyboard = [[InlineKeyboardButton(f"📢 JOIN {name}", url=link)] for name, link in not_joined]
+        keyboard.append([InlineKeyboardButton("🔄 VERIFY AGAIN", callback_data="verify")])
+        await query.message.edit_text("❌ Still not joined:", reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def text_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    # Har baar verification check
     not_joined = await check_join(context.bot, update.effective_user.id)
     if not_joined:
-        await update.message.reply_text("⚠️ Left channel? Join again to continue!")
+        keyboard = [[InlineKeyboardButton(f"📢 JOIN {name}", url=link)] for name, link in not_joined]
+        keyboard.append([InlineKeyboardButton("🔄 VERIFY AGAIN", callback_data="verify")])
+        await update.message.reply_text("⚠️ Left channel? Re-join to continue:", reply_markup=InlineKeyboardMarkup(keyboard))
         return
     
     button_map = {f"💝 𝙃𝙊𝙍𝙉𝙔 𝙀𝘿𝙄𝙏𝙎 {i} 💖": f"class{i}" for i in range(1, 32)}
